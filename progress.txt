@@ -1,0 +1,25 @@
+# Ralph Progress Log
+Started: Sun Mar  8 04:32:09 CDT 2026
+---
+
+## PRD: fix-incomplete-rebrand (all 4 stories completed)
+
+### US-001: Rename keywordsai_api_controls -> respan_api_controls
+- lib/observe/logs.ts:255: renamed Zod field keywordsai_api_controls to respan_api_controls
+- Typecheck passes
+
+### US-002: Fix old header and env var names in api/auth.ts
+- Changed 'keywords-api-base-url' to 'respan-api-base-url' (line 17)
+- Changed KEYWORDS_API_BASE_URL to RESPAN_API_BASE_URL (line 18)
+- Typecheck passes
+
+### US-003: Fix old repository URLs and directory name in README
+- README.md line 63: git clone URL -> https://github.com/respanai/respan-mcp.git
+- README.md line 64: cd keywordsai-mcp -> cd respan-mcp
+- README.md line 89: Vercel button URL -> respanai/respan-mcp
+- No old brand refs remain in source .ts or main .md files
+- Typecheck passes
+
+### US-004: Add OAUTH_SECRET to .env.example
+- Added OAUTH_SECRET entry with comment explaining it is required for OAuth flows (HTTP/Vercel deployment only)
+- Typecheck passes

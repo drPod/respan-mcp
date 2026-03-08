@@ -1,0 +1,60 @@
+{
+  "project": "respan-mcp",
+  "branchName": "ralph/fix-complete-rebrand",
+  "description": "Fix Incomplete Rebrand from Keywords AI to Respan - clean up all remaining old brand references missed in the initial rebrand commit",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Rename keywordsai_api_controls field in create_log schema",
+      "description": "As a developer using the MCP server, I want consistent field naming so that the API schema does not reference a defunct brand.",
+      "acceptanceCriteria": [
+        "In lib/observe/logs.ts, rename the Zod field keywordsai_api_controls to respan_api_controls (around line 255)",
+        "The .describe() text on that field is also updated if it references the old name",
+        "Typecheck passes (npm run build)"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Renamed keywordsai_api_controls to respan_api_controls in lib/observe/logs.ts:255. Typecheck passes."
+    },
+    {
+      "id": "US-002",
+      "title": "Fix old header and env var names in api/auth.ts",
+      "description": "As a developer deploying the server, I want the auth proxy to read the correct respan-api-base-url header and RESPAN_API_BASE_URL env var, not the old Keywords AI equivalents.",
+      "acceptanceCriteria": [
+        "In api/auth.ts line 17, change 'keywords-api-base-url' to 'respan-api-base-url'",
+        "In api/auth.ts line 18, change KEYWORDS_API_BASE_URL to RESPAN_API_BASE_URL",
+        "Typecheck passes (npm run build)"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Changed 'keywords-api-base-url' to 'respan-api-base-url' and KEYWORDS_API_BASE_URL to RESPAN_API_BASE_URL in api/auth.ts. Typecheck passes."
+    },
+    {
+      "id": "US-003",
+      "title": "Fix old repository URLs and directory name in README",
+      "description": "As a new contributor, I want the README to point to the correct repository so I can clone and contribute without confusion.",
+      "acceptanceCriteria": [
+        "README.md line 63: git clone URL updated from https://github.com/Keywords-AI/keywordsai-mcp.git to https://github.com/respanai/respan-mcp.git",
+        "README.md line 64: cd keywordsai-mcp updated to cd respan-mcp",
+        "README.md line 89: Vercel deploy button repository-url param updated from Keywords-AI/keywordsai-mcp to respanai/respan-mcp",
+        "grep -ri 'keywordsai\\|keywords-ai\\|keywords_ai' --include='*.md' --include='*.ts' returns no results",
+        "Typecheck passes (npm run build)"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Updated git clone URL to respanai/respan-mcp.git, cd directory to respan-mcp, and Vercel deploy button URL in README.md. No remaining brand refs in source files. Typecheck passes."
+    },
+    {
+      "id": "US-004",
+      "title": "Add OAUTH_SECRET to .env.example",
+      "description": "As a developer setting up the project, I want .env.example to list all required environment variables so I do not miss any during setup.",
+      "acceptanceCriteria": [
+        ".env.example includes an OAUTH_SECRET entry with a comment explaining it is required for OAuth flows (HTTP/Vercel deployment only)",
+        "Typecheck passes (npm run build)"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "Added OAUTH_SECRET entry with comment to .env.example. Typecheck passes."
+    }
+  ]
+}
