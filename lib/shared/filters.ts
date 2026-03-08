@@ -9,7 +9,7 @@ export function buildFilterBody(filters: FilterInput[]): Record<string, { value:
   for (const f of filters) {
     body[f.field] = {
       value: f.value,
-      operator: f.operator || '',
+      operator: f.operator,
     };
   }
   return body;

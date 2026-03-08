@@ -14,7 +14,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: `Invalid action. Use one of: ${validActions.join(', ')}` });
   }
 
-  const baseUrl = (req.headers['respan-api-base-url'] as string)
+  const baseUrlHeader = req.headers['respan-api-base-url'];
+  const baseUrl = (Array.isArray(baseUrlHeader) ? baseUrlHeader[0] : baseUrlHeader)
     || process.env.RESPAN_API_BASE_URL
     || DEFAULT_BASE_URL;
 

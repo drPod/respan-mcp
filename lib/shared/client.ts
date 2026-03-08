@@ -15,6 +15,7 @@ export class RespanApiError extends Error {
 
   constructor(statusCode: number, endpoint: string, responseBody: unknown) {
     super(`API Error: ${statusCode} - ${JSON.stringify(responseBody)}`);
+    Object.setPrototypeOf(this, new.target.prototype);
     this.name = "RespanApiError";
     this.statusCode = statusCode;
     this.endpoint = endpoint;
