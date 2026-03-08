@@ -1,55 +1,22 @@
 # Ralph Progress Log
-Started: Sun Mar  8 04:32:09 CDT 2026
+Started: Sun Mar  8 05:13:10 CDT 2026
 ---
 
-## PRD: fix-incomplete-rebrand (all 4 stories completed)
+## US-001: Add structured RespanApiError class
+- Added `RespanApiError extends Error` to `lib/shared/client.ts` with `statusCode`, `endpoint`, `responseBody` properties
+- Updated `respanRequest` to throw `RespanApiError` instead of generic `Error`
+- Non-JSON error responses are captured as raw text (with fallback string) before throwing
+- Build and tests pass
 
-### US-001: Rename keywordsai_api_controls -> respan_api_controls
-- lib/observe/logs.ts:255: renamed Zod field keywordsai_api_controls to respan_api_controls
-- Typecheck passes
+## US-002: Type query param objects in tool modules
+- Added `ListLogsQueryParams` interface in `lib/observe/logs.ts`
+- Added `ListTracesQueryParams` and `GetTraceQueryParams` interfaces in `lib/observe/traces.ts`
+- Added `ListCustomersQueryParams` and `GetCustomerQueryParams` interfaces in `lib/observe/users.ts`
+- All `Record<string, any>` usages for queryParams replaced with typed interfaces
+- Build and tests pass
 
-### US-002: Fix old header and env var names in api/auth.ts
-- Changed 'keywords-api-base-url' to 'respan-api-base-url' (line 17)
-- Changed KEYWORDS_API_BASE_URL to RESPAN_API_BASE_URL (line 18)
-- Typecheck passes
-
-### US-003: Fix old repository URLs and directory name in README
-- README.md line 63: git clone URL -> https://github.com/respanai/respan-mcp.git
-- README.md line 64: cd keywordsai-mcp -> cd respan-mcp
-- README.md line 89: Vercel button URL -> respanai/respan-mcp
-- No old brand refs remain in source .ts or main .md files
-- Typecheck passes
-
-### US-004: Add OAUTH_SECRET to .env.example
-- Added OAUTH_SECRET entry with comment explaining it is required for OAuth flows (HTTP/Vercel deployment only)
-- Typecheck passes
-
----
-
-## PRD: add-unit-tests (all 5 stories completed)
-
-### US-001: Set up vitest and test script
-- Installed vitest@4.0.18 as devDependency
-- Added "test": "vitest run" to package.json scripts
-- npm test exits 0; npm run build passes
-
-### US-002: Test path parameter validation
-- Created tests/client.test.ts
-- 5 tests: valid alphanumeric, hyphens/underscores/dots/@, ../ throws, space throws, / throws
-- All pass
-
-### US-003: Test resolveAuthFromEnv
-- Added 3 tests to tests/client.test.ts using vi.stubEnv
-- Covers: default baseUrl, custom baseUrl, missing key throws
-- All pass
-
-### US-004: Test OAuth encrypt/decrypt roundtrip
-- Created tests/oauth.test.ts with OAUTH_SECRET stubbed in beforeAll
-- 6 tests: encrypt/decrypt roundtrip, short token invalid, auth code roundtrip, expiry, client reg roundtrip, wrong type throws
-- All pass
-
-### US-005: Test filter transformation logic
-- Created lib/shared/filters.ts with buildFilterBody helper
-- Updated lib/observe/logs.ts and lib/observe/traces.ts to use helper
-- Created tests/filters.test.ts with 4 tests: empty, single, multiple, empty operator
-- All 18 tests pass; typecheck passes
+## US-003: Remove as any casts in mcp-handler.ts
+- Imported `IncomingMessage` and `ServerResponse` from `node:http`
+- Replaced `req as any` and `res as any` with `req as IncomingMessage` and `res as ServerResponse`
+- No 'any' remains in mcp-handler.ts
+- Build and tests pass

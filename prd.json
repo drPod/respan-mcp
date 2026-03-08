@@ -1,92 +1,50 @@
 {
   "project": "respan-mcp",
-  "branchName": "ralph/add-unit-tests",
-  "description": "Add Unit Test Suite - establish vitest and cover all pure functions (OAuth crypto, path validation, env resolution, filter transformation) without requiring a live API key",
+  "branchName": "ralph/improve-error-handling-types",
+  "description": "Improve Error Handling and Type Safety - eliminate any types, add a structured RespanApiError class, and handle non-JSON error responses gracefully",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Set up vitest and test script",
-      "description": "As a developer, I want npm test to run a test suite so I can validate changes locally.",
+      "title": "Add structured RespanApiError class",
+      "description": "As a developer, I want API errors to carry structured data (status code, endpoint, response body) so callers can handle them programmatically.",
       "acceptanceCriteria": [
-        "vitest added as a devDependency in package.json",
-        "\"test\": \"vitest run\" script added to package.json scripts",
-        "npm test runs and exits with code 0 (or non-zero only when tests fail, not due to config errors)",
+        "New exported class RespanApiError extends Error in lib/shared/client.ts",
+        "Class has properties: statusCode (number), endpoint (string), responseBody (unknown)",
+        "respanRequest throws RespanApiError instead of generic Error on non-OK responses",
+        "When response.json() fails on an error response, responseBody is set to the raw text (or a fallback string) and the error is still thrown — not silently swallowed",
         "Typecheck passes (npm run build)"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "vitest@4.0.18 installed as devDependency; 'test': 'vitest run' added to scripts; npm test exits 0; npm run build passes."
+      "notes": "Added RespanApiError class with statusCode, endpoint, responseBody properties. respanRequest now throws RespanApiError. Non-JSON error responses captured as raw text."
     },
     {
       "id": "US-002",
-      "title": "Test path parameter validation",
-      "description": "As a developer, I want tests confirming that validatePathParam blocks path traversal and allows valid IDs.",
+      "title": "Type query param objects in tool modules",
+      "description": "As a developer, I want typed query parameter objects instead of Record<string, any> so that typos and wrong types are caught at compile time.",
       "acceptanceCriteria": [
-        "Create tests/client.test.ts",
-        "Test: valid alphanumeric ID returns the same string",
-        "Test: ID with hyphens, underscores, dots, and @ passes through",
-        "Test: ID containing ../ throws an error",
-        "Test: ID containing a space throws an error",
-        "Test: ID containing / throws an error",
-        "Tests pass (npm test)"
+        "Define an interface or type alias for query params in each tool file that uses Record<string, any> for queryParams: logs.ts, traces.ts, users.ts (prompts.ts uses inline object literals and can remain as-is)",
+        "All Record<string, any> usages for queryParams local variables are replaced with the typed interface",
+        "No new any types introduced",
+        "Typecheck passes (npm run build)"
       ],
       "priority": 2,
       "passes": true,
-      "notes": "tests/client.test.ts created with 5 validatePathParam tests; all pass."
+      "notes": "Added typed interfaces ListLogsQueryParams, ListTracesQueryParams, GetTraceQueryParams, ListCustomersQueryParams, GetCustomerQueryParams replacing all Record<string, any> usages in logs.ts, traces.ts, users.ts."
     },
     {
       "id": "US-003",
-      "title": "Test resolveAuthFromEnv",
-      "description": "As a developer, I want tests confirming that resolveAuthFromEnv reads environment variables correctly and throws when required vars are missing.",
+      "title": "Remove as any casts in mcp-handler.ts",
+      "description": "As a developer, I want proper typing on the transport handler call so TypeScript catches type mismatches instead of silently accepting anything.",
       "acceptanceCriteria": [
-        "Tests in tests/client.test.ts (same file as US-002)",
-        "Test: returns correct apiKey and the default baseUrl when only RESPAN_API_KEY is set",
-        "Test: returns custom baseUrl when both RESPAN_API_KEY and RESPAN_API_BASE_URL are set",
-        "Test: throws an error when RESPAN_API_KEY is not set",
-        "Use vitest's vi.stubEnv to set/unset env vars safely between tests",
-        "Tests pass (npm test)"
+        "In lib/shared/mcp-handler.ts lines 90-91, replace req as any and res as any with a typed approach",
+        "Acceptable solutions: import the expected types from the MCP SDK or Node http module and cast to those, or add a single well-commented type assertion explaining why it is safe",
+        "The word 'any' does not appear in mcp-handler.ts (unless inside a comment)",
+        "Typecheck passes (npm run build)"
       ],
       "priority": 3,
       "passes": true,
-      "notes": "3 resolveAuthFromEnv tests added to tests/client.test.ts using vi.stubEnv; all pass."
-    },
-    {
-      "id": "US-004",
-      "title": "Test OAuth encrypt/decrypt roundtrip",
-      "description": "As a developer, I want tests proving that encrypt then decrypt roundtrips correctly and that tampered or expired tokens are rejected.",
-      "acceptanceCriteria": [
-        "Create tests/oauth.test.ts",
-        "OAUTH_SECRET env var set in test setup (e.g. beforeAll using vi.stubEnv)",
-        "Test: encrypt then decrypt returns the original payload",
-        "Test: token with fewer than 28 bytes throws 'Invalid token'",
-        "Test: createAuthCode then verifyAuthCode roundtrip preserves jwt, codeChallenge, redirectUri, clientId",
-        "Test: verifyAuthCode with an already-expired code (exp in the past) throws 'Auth code expired'",
-        "Test: createClientRegistration then verifyClientRegistration roundtrip preserves clientId and redirectUris",
-        "Test: verifyAuthCode called with a client registration token throws (wrong type check)",
-        "Tests pass (npm test)"
-      ],
-      "priority": 4,
-      "passes": true,
-      "notes": "tests/oauth.test.ts created with 6 tests covering encrypt/decrypt roundtrip, short-token rejection, auth code roundtrip, expiry, client reg roundtrip, and wrong-type rejection; all pass."
-    },
-    {
-      "id": "US-005",
-      "title": "Test filter transformation logic",
-      "description": "As a developer, I want tests confirming that the filters array is correctly transformed into the backend body object format used in list_logs and list_traces.",
-      "acceptanceCriteria": [
-        "Create tests/filters.test.ts",
-        "Extract the filter transformation loop into a shared helper function (e.g. lib/shared/filters.ts: export function buildFilterBody(filters)) so it is independently testable",
-        "Update list_logs and list_traces to call this helper instead of inlining the loop",
-        "Test: empty array produces empty object {}",
-        "Test: single filter {field: 'error_count', operator: 'gt', value: [0]} produces {error_count: {value: [0], operator: 'gt'}}",
-        "Test: multiple filters all appear as separate keys in the output",
-        "Test: filter with empty string operator produces operator: '' in the output",
-        "Tests pass (npm test)",
-        "Typecheck passes (npm run build)"
-      ],
-      "priority": 5,
-      "passes": true,
-      "notes": "lib/shared/filters.ts created with buildFilterBody; logs.ts and traces.ts updated to use helper; tests/filters.test.ts has 4 tests; all 18 tests pass; build passes."
+      "notes": "Replaced req as any and res as any with IncomingMessage and ServerResponse imports from node:http. No 'any' remains in mcp-handler.ts."
     }
   ]
 }
