@@ -23,3 +23,33 @@ Started: Sun Mar  8 04:32:09 CDT 2026
 ### US-004: Add OAUTH_SECRET to .env.example
 - Added OAUTH_SECRET entry with comment explaining it is required for OAuth flows (HTTP/Vercel deployment only)
 - Typecheck passes
+
+---
+
+## PRD: add-unit-tests (all 5 stories completed)
+
+### US-001: Set up vitest and test script
+- Installed vitest@4.0.18 as devDependency
+- Added "test": "vitest run" to package.json scripts
+- npm test exits 0; npm run build passes
+
+### US-002: Test path parameter validation
+- Created tests/client.test.ts
+- 5 tests: valid alphanumeric, hyphens/underscores/dots/@, ../ throws, space throws, / throws
+- All pass
+
+### US-003: Test resolveAuthFromEnv
+- Added 3 tests to tests/client.test.ts using vi.stubEnv
+- Covers: default baseUrl, custom baseUrl, missing key throws
+- All pass
+
+### US-004: Test OAuth encrypt/decrypt roundtrip
+- Created tests/oauth.test.ts with OAUTH_SECRET stubbed in beforeAll
+- 6 tests: encrypt/decrypt roundtrip, short token invalid, auth code roundtrip, expiry, client reg roundtrip, wrong type throws
+- All pass
+
+### US-005: Test filter transformation logic
+- Created lib/shared/filters.ts with buildFilterBody helper
+- Updated lib/observe/logs.ts and lib/observe/traces.ts to use helper
+- Created tests/filters.test.ts with 4 tests: empty, single, multiple, empty operator
+- All 18 tests pass; typecheck passes

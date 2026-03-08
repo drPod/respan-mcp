@@ -1,60 +1,92 @@
 {
   "project": "respan-mcp",
-  "branchName": "ralph/fix-complete-rebrand",
-  "description": "Fix Incomplete Rebrand from Keywords AI to Respan - clean up all remaining old brand references missed in the initial rebrand commit",
+  "branchName": "ralph/add-unit-tests",
+  "description": "Add Unit Test Suite - establish vitest and cover all pure functions (OAuth crypto, path validation, env resolution, filter transformation) without requiring a live API key",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Rename keywordsai_api_controls field in create_log schema",
-      "description": "As a developer using the MCP server, I want consistent field naming so that the API schema does not reference a defunct brand.",
+      "title": "Set up vitest and test script",
+      "description": "As a developer, I want npm test to run a test suite so I can validate changes locally.",
       "acceptanceCriteria": [
-        "In lib/observe/logs.ts, rename the Zod field keywordsai_api_controls to respan_api_controls (around line 255)",
-        "The .describe() text on that field is also updated if it references the old name",
+        "vitest added as a devDependency in package.json",
+        "\"test\": \"vitest run\" script added to package.json scripts",
+        "npm test runs and exits with code 0 (or non-zero only when tests fail, not due to config errors)",
         "Typecheck passes (npm run build)"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Renamed keywordsai_api_controls to respan_api_controls in lib/observe/logs.ts:255. Typecheck passes."
+      "notes": "vitest@4.0.18 installed as devDependency; 'test': 'vitest run' added to scripts; npm test exits 0; npm run build passes."
     },
     {
       "id": "US-002",
-      "title": "Fix old header and env var names in api/auth.ts",
-      "description": "As a developer deploying the server, I want the auth proxy to read the correct respan-api-base-url header and RESPAN_API_BASE_URL env var, not the old Keywords AI equivalents.",
+      "title": "Test path parameter validation",
+      "description": "As a developer, I want tests confirming that validatePathParam blocks path traversal and allows valid IDs.",
       "acceptanceCriteria": [
-        "In api/auth.ts line 17, change 'keywords-api-base-url' to 'respan-api-base-url'",
-        "In api/auth.ts line 18, change KEYWORDS_API_BASE_URL to RESPAN_API_BASE_URL",
-        "Typecheck passes (npm run build)"
+        "Create tests/client.test.ts",
+        "Test: valid alphanumeric ID returns the same string",
+        "Test: ID with hyphens, underscores, dots, and @ passes through",
+        "Test: ID containing ../ throws an error",
+        "Test: ID containing a space throws an error",
+        "Test: ID containing / throws an error",
+        "Tests pass (npm test)"
       ],
       "priority": 2,
       "passes": true,
-      "notes": "Changed 'keywords-api-base-url' to 'respan-api-base-url' and KEYWORDS_API_BASE_URL to RESPAN_API_BASE_URL in api/auth.ts. Typecheck passes."
+      "notes": "tests/client.test.ts created with 5 validatePathParam tests; all pass."
     },
     {
       "id": "US-003",
-      "title": "Fix old repository URLs and directory name in README",
-      "description": "As a new contributor, I want the README to point to the correct repository so I can clone and contribute without confusion.",
+      "title": "Test resolveAuthFromEnv",
+      "description": "As a developer, I want tests confirming that resolveAuthFromEnv reads environment variables correctly and throws when required vars are missing.",
       "acceptanceCriteria": [
-        "README.md line 63: git clone URL updated from https://github.com/Keywords-AI/keywordsai-mcp.git to https://github.com/respanai/respan-mcp.git",
-        "README.md line 64: cd keywordsai-mcp updated to cd respan-mcp",
-        "README.md line 89: Vercel deploy button repository-url param updated from Keywords-AI/keywordsai-mcp to respanai/respan-mcp",
-        "grep -ri 'keywordsai\\|keywords-ai\\|keywords_ai' --include='*.md' --include='*.ts' returns no results",
-        "Typecheck passes (npm run build)"
+        "Tests in tests/client.test.ts (same file as US-002)",
+        "Test: returns correct apiKey and the default baseUrl when only RESPAN_API_KEY is set",
+        "Test: returns custom baseUrl when both RESPAN_API_KEY and RESPAN_API_BASE_URL are set",
+        "Test: throws an error when RESPAN_API_KEY is not set",
+        "Use vitest's vi.stubEnv to set/unset env vars safely between tests",
+        "Tests pass (npm test)"
       ],
       "priority": 3,
       "passes": true,
-      "notes": "Updated git clone URL to respanai/respan-mcp.git, cd directory to respan-mcp, and Vercel deploy button URL in README.md. No remaining brand refs in source files. Typecheck passes."
+      "notes": "3 resolveAuthFromEnv tests added to tests/client.test.ts using vi.stubEnv; all pass."
     },
     {
       "id": "US-004",
-      "title": "Add OAUTH_SECRET to .env.example",
-      "description": "As a developer setting up the project, I want .env.example to list all required environment variables so I do not miss any during setup.",
+      "title": "Test OAuth encrypt/decrypt roundtrip",
+      "description": "As a developer, I want tests proving that encrypt then decrypt roundtrips correctly and that tampered or expired tokens are rejected.",
       "acceptanceCriteria": [
-        ".env.example includes an OAUTH_SECRET entry with a comment explaining it is required for OAuth flows (HTTP/Vercel deployment only)",
-        "Typecheck passes (npm run build)"
+        "Create tests/oauth.test.ts",
+        "OAUTH_SECRET env var set in test setup (e.g. beforeAll using vi.stubEnv)",
+        "Test: encrypt then decrypt returns the original payload",
+        "Test: token with fewer than 28 bytes throws 'Invalid token'",
+        "Test: createAuthCode then verifyAuthCode roundtrip preserves jwt, codeChallenge, redirectUri, clientId",
+        "Test: verifyAuthCode with an already-expired code (exp in the past) throws 'Auth code expired'",
+        "Test: createClientRegistration then verifyClientRegistration roundtrip preserves clientId and redirectUris",
+        "Test: verifyAuthCode called with a client registration token throws (wrong type check)",
+        "Tests pass (npm test)"
       ],
       "priority": 4,
       "passes": true,
-      "notes": "Added OAUTH_SECRET entry with comment to .env.example. Typecheck passes."
+      "notes": "tests/oauth.test.ts created with 6 tests covering encrypt/decrypt roundtrip, short-token rejection, auth code roundtrip, expiry, client reg roundtrip, and wrong-type rejection; all pass."
+    },
+    {
+      "id": "US-005",
+      "title": "Test filter transformation logic",
+      "description": "As a developer, I want tests confirming that the filters array is correctly transformed into the backend body object format used in list_logs and list_traces.",
+      "acceptanceCriteria": [
+        "Create tests/filters.test.ts",
+        "Extract the filter transformation loop into a shared helper function (e.g. lib/shared/filters.ts: export function buildFilterBody(filters)) so it is independently testable",
+        "Update list_logs and list_traces to call this helper instead of inlining the loop",
+        "Test: empty array produces empty object {}",
+        "Test: single filter {field: 'error_count', operator: 'gt', value: [0]} produces {error_count: {value: [0], operator: 'gt'}}",
+        "Test: multiple filters all appear as separate keys in the output",
+        "Test: filter with empty string operator produces operator: '' in the output",
+        "Tests pass (npm test)",
+        "Typecheck passes (npm run build)"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "lib/shared/filters.ts created with buildFilterBody; logs.ts and traces.ts updated to use helper; tests/filters.test.ts has 4 tests; all 18 tests pass; build passes."
     }
   ]
 }
